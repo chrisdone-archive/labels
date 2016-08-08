@@ -43,14 +43,14 @@ instance (Ord value) => Ord (label := value) where
 instance (Show t) => Show (l := t) where
   show (l := t) = "#" ++ (symbolVal l) ++ " := " ++ show t
 
-class Has (label :: Symbol) record value | label record -> value where
+class Has (label :: Symbol) value record | label record -> value where
   -- | Get a field by doing: @get #salary employee@
   get :: Proxy label -> record -> value
   -- | Set a field by doing: @set #salary 54.00 employee@
   set :: Proxy label -> value -> record -> record
 
 -- | Modify a field by doing: @modify #salary (* 1.1) employee@
-modify :: Has label record t => Proxy label -> (t -> t) -> record -> record
+modify :: Has label value record => Proxy label -> (value -> value) -> record -> record
 modify f g r = set f (g (get f r)) r
 
 class Cons label value record where
@@ -104,7 +104,7 @@ instance l ~ l' => IsLabel (l :: Symbol) (Proxy l') where
 --   fromLabel _ = get @l
 
 $(let makeInstance size slot =
-          [d|instance Has $(varT l_tyvar) $instHead $(varT a_tyvar)
+          [d|instance Has $(varT l_tyvar) $(varT a_tyvar) $instHead
                where get _ = $getImpl
                      set _ = $setImpl|]
         where
