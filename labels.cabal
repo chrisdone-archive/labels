@@ -17,7 +17,7 @@ cabal-version:       >=1.10
 library
   hs-source-dirs:      src
   ghc-options:         -Wall
-  exposed-modules:     Labels
+  exposed-modules:     Labels, Labels.Internal
   build-depends:       base >= 4.7 && < 5, template-haskell
   default-language:    Haskell2010
 
