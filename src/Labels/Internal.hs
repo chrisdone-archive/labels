@@ -27,6 +27,9 @@ import GHC.OverloadedLabels
 import GHC.TypeLits
 import Language.Haskell.TH
 
+--------------------------------------------------------------------------------
+-- A labelled value
+
 -- | Field named @l@ labels value of type @t@.
 -- Example: @(#name := \"Chris\") :: (\"name\" := String)@
 data label := value = KnownSymbol label => Proxy label := value
@@ -45,6 +48,9 @@ instance (Ord value) => Ord (label := value) where
 instance (Show t) => Show (l := t) where
   show (l := t) = "#" ++ (symbolVal l) ++ " := " ++ show t
 
+--------------------------------------------------------------------------------
+-- Basic accessors
+
 class Has (label :: Symbol) value record | label record -> value where
   -- | Get a field by doing: @get #salary employee@
   get :: Proxy label -> record -> value
@@ -55,6 +61,9 @@ class Has (label :: Symbol) value record | label record -> value where
 modify :: Has label value record => Proxy label -> (value -> value) -> record -> record
 modify f g r = set f (g (get f r)) r
 {-# INLINE modify #-}
+
+--------------------------------------------------------------------------------
+-- Cons two records together
 
 class Cons label value record where
   type Consed label value record
@@ -71,8 +80,12 @@ instance Cons label value (label' := value') where
   cons field field2 = (field,field2)
   {-# INLINE cons #-}
 
-instance IsString (Q Exp) where
-  fromString str = [|Proxy :: Proxy $(litT (return (StrTyLit str)))|]
+--------------------------------------------------------------------------------
+-- Labels
+
+instance (Functor f, HasField x s a, UpdateField x s t b)
+        => IsLabel x ((a -> f b) -> s -> f t) where
+  fromLabel w s = setField (proxy# :: Proxy# x) s <$> w (getField (proxy# :: Proxy# x) s)
 
 instance l ~ l' => IsLabel (l :: Symbol) (Proxy l') where
   fromLabel _ = Proxy
@@ -81,6 +94,12 @@ instance l ~ l' => IsLabel (l :: Symbol) (Proxy l') where
 instance Has l a r => IsLabel (l :: Symbol) (r -> a) where
   fromLabel _ = get (Proxy :: Proxy l)
   {-# INLINE fromLabel #-}
+
+instance IsString (Q Exp) where
+  fromString str = [|Proxy :: Proxy $(litT (return (StrTyLit str)))|]
+
+--------------------------------------------------------------------------------
+-- TH-derived instances
 
 $(let makeInstance size =
         [d|instance Cons $(varT label_tyvar) $(varT value_tyvar) $tupTy where
