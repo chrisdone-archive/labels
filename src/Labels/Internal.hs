@@ -83,17 +83,15 @@ instance Cons label value (label' := value') where
 --------------------------------------------------------------------------------
 -- Labels
 
-instance (Functor f, HasField x s a, UpdateField x s t b)
-        => IsLabel x ((a -> f b) -> s -> f t) where
-  fromLabel w s = setField (proxy# :: Proxy# x) s <$> w (getField (proxy# :: Proxy# x) s)
+instance l ~ l' =>
+         IsLabel (l :: Symbol) (Proxy l') where
+    fromLabel _ = Proxy
+    {-# INLINE fromLabel #-}
 
-instance l ~ l' => IsLabel (l :: Symbol) (Proxy l') where
-  fromLabel _ = Proxy
-  {-# INLINE fromLabel #-}
-
-instance Has l a r => IsLabel (l :: Symbol) (r -> a) where
-  fromLabel _ = get (Proxy :: Proxy l)
-  {-# INLINE fromLabel #-}
+instance Has l a r =>
+         IsLabel (l :: Symbol) (r -> a) where
+    fromLabel _ = get (Proxy :: Proxy l)
+    {-# INLINE fromLabel #-}
 
 instance IsString (Q Exp) where
   fromString str = [|Proxy :: Proxy $(litT (return (StrTyLit str)))|]
