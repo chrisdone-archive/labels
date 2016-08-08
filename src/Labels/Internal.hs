@@ -36,9 +36,11 @@ infix 6 :=
 
 instance (Eq value) => Eq (label := value) where
   _ := x == _ := y = x == y
+  {-# INLINE (==) #-}
 
 instance (Ord value) => Ord (label := value) where
   compare (_ := x) (_ := y) = x `compare` y
+  {-# INLINE compare #-}
 
 instance (Show t) => Show (l := t) where
   show (l := t) = "#" ++ (symbolVal l) ++ " := " ++ show t
@@ -52,6 +54,7 @@ class Has (label :: Symbol) value record | label record -> value where
 -- | Modify a field by doing: @modify #salary (* 1.1) employee@
 modify :: Has label value record => Proxy label -> (value -> value) -> record -> record
 modify f g r = set f (g (get f r)) r
+{-# INLINE modify #-}
 
 class Cons label value record where
   type Consed label value record
@@ -61,15 +64,18 @@ class Cons label value record where
 instance Cons label value () where
   type Consed label value () = (label := value)
   cons field () = field
+  {-# INLINE cons #-}
 
 instance Cons label value (label' := value') where
   type Consed label value (label' := value') = (label := value,label' := value')
   cons field field2 = (field,field2)
+  {-# INLINE cons #-}
 
 $(let makeInstance size =
         [d|instance Cons $(varT label_tyvar) $(varT value_tyvar) $tupTy where
              type Consed $(varT label_tyvar) $(varT value_tyvar) $tupTy = $newTupTy
-             cons $(varP field_name) $tupPat = $tupEx|]
+             cons $(varP field_name) $tupPat = $tupEx
+             {-# INLINE cons #-}|]
         where label_tyvar = mkName "label"
               value_tyvar = mkName "value"
               field_name = mkName "field"
@@ -99,14 +105,19 @@ instance IsString (Q Exp) where
 
 instance l ~ l' => IsLabel (l :: Symbol) (Proxy l') where
   fromLabel _ = Proxy
+  {-# INLINE fromLabel #-}
 
--- instance Has l r a => IsLabel (l :: Symbol) (r -> a) where
---   fromLabel _ = get @l
+instance Has l a r => IsLabel (l :: Symbol) (r -> a) where
+  fromLabel _ = get (Proxy :: Proxy l)
+  {-# INLINE fromLabel #-}
 
 $(let makeInstance size slot =
           [d|instance Has $(varT l_tyvar) $(varT a_tyvar) $instHead
                where get _ = $getImpl
-                     set _ = $setImpl|]
+                     {-# INLINE get #-}
+                     set _ = $setImpl
+                     {-# INLINE set #-}
+                     |]
         where
           l_tyvar = mkName "l"
           a_tyvar = mkName "a"
