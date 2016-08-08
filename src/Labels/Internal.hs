@@ -71,6 +71,17 @@ instance Cons label value (label' := value') where
   cons field field2 = (field,field2)
   {-# INLINE cons #-}
 
+instance IsString (Q Exp) where
+  fromString str = [|Proxy :: Proxy $(litT (return (StrTyLit str)))|]
+
+instance l ~ l' => IsLabel (l :: Symbol) (Proxy l') where
+  fromLabel _ = Proxy
+  {-# INLINE fromLabel #-}
+
+instance Has l a r => IsLabel (l :: Symbol) (r -> a) where
+  fromLabel _ = get (Proxy :: Proxy l)
+  {-# INLINE fromLabel #-}
+
 $(let makeInstance size =
         [d|instance Cons $(varT label_tyvar) $(varT value_tyvar) $tupTy where
              type Consed $(varT label_tyvar) $(varT value_tyvar) $tupTy = $newTupTy
@@ -99,17 +110,6 @@ $(let makeInstance size =
                                varT (mkName ("u" ++ show j)))
                          [1 .. size])
   in fmap concat (mapM makeInstance [2 .. 24]))
-
-instance IsString (Q Exp) where
-  fromString str = [|Proxy :: Proxy $(litT (return (StrTyLit str)))|]
-
-instance l ~ l' => IsLabel (l :: Symbol) (Proxy l') where
-  fromLabel _ = Proxy
-  {-# INLINE fromLabel #-}
-
-instance Has l a r => IsLabel (l :: Symbol) (r -> a) where
-  fromLabel _ = get (Proxy :: Proxy l)
-  {-# INLINE fromLabel #-}
 
 $(let makeInstance size slot =
           [d|instance Has $(varT l_tyvar) $(varT a_tyvar) $instHead
