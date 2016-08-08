@@ -5,6 +5,7 @@ module Labels
    get
    -- Construction
    ,(:=)(..)
+   ,Has
    )
   where
 

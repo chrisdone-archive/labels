@@ -21,9 +21,7 @@
 module Labels.Internal where
 
 import Data.Data
-import Data.Proxy
 import Data.String
-import Data.Typeable
 import GHC.OverloadedLabels
 import GHC.TypeLits
 import Language.Haskell.TH
@@ -83,4 +81,3 @@ $(let makeInstance size slot =
          (mapM (\size -> mapM (\slot -> makeInstance size slot)
                               [1 .. size])
                 [1 .. 24]))
-
