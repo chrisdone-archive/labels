@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE StandaloneDeriving #-}
@@ -10,9 +11,10 @@
 {-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE FlexibleInstances #-}
+#if __GLASGOW_HASKELL__ >= 800
 {-# LANGUAGE OverloadedLabels #-}
+#endif
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE AllowAmbiguousTypes #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
@@ -23,9 +25,12 @@ module Labels.Internal where
 
 import Data.Data
 import Data.String
-import GHC.OverloadedLabels
 import GHC.TypeLits
 import Language.Haskell.TH
+
+#if __GLASGOW_HASKELL__ >= 800
+import GHC.OverloadedLabels
+#endif
 
 --------------------------------------------------------------------------------
 -- A labelled value
@@ -83,6 +88,7 @@ instance Cons label value (label' := value') where
 --------------------------------------------------------------------------------
 -- Labels
 
+#if __GLASGOW_HASKELL__ >= 800
 instance l ~ l' =>
          IsLabel (l :: Symbol) (Proxy l') where
     fromLabel _ = Proxy
@@ -92,6 +98,7 @@ instance Has l a r =>
          IsLabel (l :: Symbol) (r -> a) where
     fromLabel _ = get (Proxy :: Proxy l)
     {-# INLINE fromLabel #-}
+#endif
 
 instance IsString (Q Exp) where
   fromString str = [|Proxy :: Proxy $(litT (return (StrTyLit str)))|]
@@ -113,7 +120,7 @@ $(let makeInstance size =
                   foldl
                       appT
                       (tupleT (size+1))
-                      ((infixT (varT label_tyvar) ''(:=) (varT value_tyvar)) :
+                      ((appT (appT (conT ''(:=)) (varT label_tyvar)) (varT value_tyvar)) :
                        (map
                             (\j ->
                                   varT (mkName ("u" ++ show j)))
@@ -178,7 +185,7 @@ $(let makeInstance size slot =
                   (map
                        (\j ->
                              if j == slot
-                                 then infixT (varT l_tyvar) ''(:=) (varT a_tyvar)
+                                 then appT (appT (conT ''(:=)) (varT l_tyvar)) (varT a_tyvar)
                                  else varT (mkName ("u" ++ show j)))
                        [1 .. size])
   in fmap
