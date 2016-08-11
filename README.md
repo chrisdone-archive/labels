@@ -2,8 +2,11 @@
 
 Declare and access tuple fields with labels
 
+This package is experimental, exploring the design space opened up by
+the implemented and to-be-implemented work on extensible records in GHC.
+
 *Note: You need GHC 8.0.1 for the `#foo` syntax, otherwise you have to
- use `$("foo")`.*
+ use `$("foo")` which works on GHC 7.10.*
 
 ## Basic examples
 
