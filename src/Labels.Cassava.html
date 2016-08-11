@@ -1,0 +1,69 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-pragma">{-# LANGUAGE TemplateHaskell #-}</span><span>
+</span><a name="line-2"></a><span class="hs-pragma">{-# LANGUAGE DataKinds #-}</span><span>
+</span><a name="line-3"></a><span class="hs-pragma">{-# LANGUAGE FlexibleInstances #-}</span><span>
+</span><a name="line-4"></a><span class="hs-pragma">{-# LANGUAGE ScopedTypeVariables #-}</span><span>
+</span><a name="line-5"></a><span class="hs-pragma">{-# OPTIONS_GHC -fno-warn-orphans #-}</span><span>
+</span><a name="line-6"></a><span>
+</span><a name="line-7"></a><span class="hs-comment">-- | Provide instances of FromNamedRecord for named tuples up to 24 fields.</span><span>
+</span><a name="line-8"></a><span class="hs-comment">--</span><span>
+</span><a name="line-9"></a><span class="hs-comment">-- Import like: @import Labels.Cassava ()@</span><span>
+</span><a name="line-10"></a><span class="hs-comment">--</span><span>
+</span><a name="line-11"></a><span>
+</span><a name="line-12"></a><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Labels</span><span class="hs-operator">.</span><span class="hs-identifier">Cassava</span><span> </span><span class="hs-keyword">where</span><span>
+</span><a name="line-13"></a><span>
+</span><a name="line-14"></a><span class="hs-keyword">import</span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-identifier">Data</span><span class="hs-operator">.</span><span class="hs-identifier">ByteString</span><span class="hs-operator">.</span><span class="hs-identifier">Char8</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="hs-identifier">S8</span><span>
+</span><a name="line-15"></a><span class="hs-keyword">import</span><span>           </span><span class="hs-identifier">Data</span><span class="hs-operator">.</span><span class="hs-identifier">Csv</span><span>
+</span><a name="line-16"></a><span class="hs-keyword">import</span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-identifier">Data</span><span class="hs-operator">.</span><span class="hs-identifier">HashMap</span><span class="hs-operator">.</span><span class="hs-identifier">Strict</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="hs-identifier">M</span><span>
+</span><a name="line-17"></a><span class="hs-keyword">import</span><span>           </span><span class="hs-identifier">Data</span><span class="hs-operator">.</span><span class="hs-identifier">Proxy</span><span>
+</span><a name="line-18"></a><span class="hs-keyword">import</span><span>           </span><span class="hs-identifier">GHC</span><span class="hs-operator">.</span><span class="hs-identifier">TypeLits</span><span>
+</span><a name="line-19"></a><span class="hs-keyword">import</span><span>           </span><a href="Labels.html"><span class="hs-identifier">Labels</span></a><span>
+</span><a name="line-20"></a><span class="hs-keyword">import</span><span>           </span><span class="hs-identifier">Language</span><span class="hs-operator">.</span><span class="hs-identifier">Haskell</span><span class="hs-operator">.</span><span class="hs-identifier">TH</span><span>
+</span><a name="line-21"></a><span>
+</span><a name="line-22"></a><span class="hs-operator">$</span><span class="hs-special">(</span><span class="hs-keyword">let</span><span> </span><a href="#local-1627651461"><span class="hs-identifier hs-var">makeInstance</span></a><span> </span><span class="hs-glyph">::</span><span> </span><a href="#local-1627651461"><span class="hs-identifier hs-var">Int</span></a><span> </span><span class="hs-glyph">-&gt;</span><span> </span><a href="#local-1627651461"><span class="hs-identifier hs-var">Q</span></a><span> </span><a href="#local-1627651461"><span class="hs-identifier hs-var">Dec</span></a><span>
+</span><a name="line-23"></a><span>      </span><a href="#local-1627651461"><span class="hs-identifier hs-var">makeInstance</span></a><span> </span><a href="#local-1627651461"><span class="hs-identifier hs-var">size</span></a><span> </span><span class="hs-glyph">=</span><span>
+</span><a name="line-24"></a><span>          </span><a href="#local-1627651461"><span class="hs-identifier hs-var">instanceD</span></a><span>
+</span><a name="line-25"></a><span>              </span><a href="#local-1627651461"><span class="hs-identifier hs-var">context</span></a><span>
+</span><a name="line-26"></a><span>              </span><span class="hs-special">(</span><a href="#local-1627651461"><span class="hs-identifier hs-var">appT</span></a><span> </span><span class="hs-special">(</span><a href="#local-1627651461"><span class="hs-identifier hs-var">conT</span></a><span> </span><span class="hs-char">''FromNamedRecord) instHead)
+              [ funD
+                    'parseNamedRecord
+                    [clause [varP hash_var] (normalB (tuplize (map getter [1::Int .. size]))) []]]
+        where
+          l_tyvar j = mkName (&quot;l&quot; ++ show j)
+          v_tyvar j = mkName (&quot;v&quot; ++ show j)
+          hash_var = mkName &quot;hash&quot;
+          context =
+              return
+                  (concat
+                       (map
+                            (\i -&gt;
+                                  [AppT (ConT ''KnownSymbol) (VarT (l_tyvar i))
+                                  ,AppT (ConT ''FromField) (VarT (v_tyvar i))])
+                            [1 .. size]))
+          instHead =
+              foldl
+                  appT
+                  (tupleT size)
+                  (map
+                       (\j -&gt;
+                             appT
+                                 (appT (conT ''(:=)) (varT (l_tyvar j)))
+                                 (varT (v_tyvar j)))
+                       [1 .. size])
+          tuplize [] = fail &quot;Need at least one field.&quot;
+          tuplize [j] = j
+          tuplize js = foldl (\acc (i,g) -&gt; infixApp acc (varE (if i == 1
+                                                                   then '(&lt;$&gt;)
+                                                                   else '(&lt;*&gt;))) g)
+                             tupSectionE
+                             (zip [1::Int ..] js)
+          tupSectionE  =
+            lamE (map (varP.var) [1..size])
+                 (tupE (map (varE.var) [1..size]))
+            where var i = mkName (&quot;t&quot; ++ show i)
+          getter (j::Int) =
+              [|let proxy = Proxy :: Proxy $(varT (l_tyvar j))
+                in case M.lookup (S8.pack (symbolVal proxy)) hash of
+                       Nothing -&gt; fail (&quot;Missing field &quot; ++ symbolVal proxy)
+                       Just v -&gt; fmap (proxy :=) (parseField v)|]
+  in mapM makeInstance [1..24])
+</span></pre></body></html>
