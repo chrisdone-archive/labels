@@ -109,7 +109,7 @@ We can just make up new fields on the fly:
 ```
 
 Sometimes a CSV file will have non-valid Haskell identifiers or
-spaces, e.g. `adjust close` here:
+spaces, e.g. `adj close` here:
 
 ``` haskell
 > Right (headers,rows :: Vector ("date" := String, "adj close" := Double)) <- fmap decodeByName (LB.readFile "AAPL.csv")
