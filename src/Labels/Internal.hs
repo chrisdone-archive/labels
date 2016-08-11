@@ -93,11 +93,6 @@ instance l ~ l' =>
          IsLabel (l :: Symbol) (Proxy l') where
     fromLabel _ = Proxy
     {-# INLINE fromLabel #-}
-
-instance Has l a r =>
-         IsLabel (l :: Symbol) (r -> a) where
-    fromLabel _ = get (Proxy :: Proxy l)
-    {-# INLINE fromLabel #-}
 #endif
 
 instance IsString (Q Exp) where
@@ -193,4 +188,3 @@ $(let makeInstance size slot =
          (mapM (\size -> mapM (\slot -> makeInstance size slot)
                               [1 .. size])
                 [1 .. 24]))
-

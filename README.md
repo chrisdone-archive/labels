@@ -33,8 +33,6 @@ Let's use GHCi:
 <tr><td>Get fields of a record</td><td><pre lang="haskell">
 > get #bar (#foo := "hi", #bar := 123)
 123
-> #bar (#foo := "hi", #bar := 123) -- or this convenience
-123
 </pre></td></tr>
 <tr><td>Set fields of a record</td><td><pre lang="haskell">
 > set #bar 66 (#foo := "hi", #bar := 123)
@@ -99,14 +97,14 @@ We can print the rows as-is:
 Accessing fields is natural as anything:
 
 ``` haskell
-> V.sum (V.map #low rows)
+> V.sum (V.map (get #low) rows)
 2331.789993
 ```
 
 We can just make up new fields on the fly:
 
 ``` haskell
-> let diffed = V.map (\row -> cons (#diff := (#high row - #low row)) row) rows
+> let diffed = V.map (\row -> cons (#diff := (get #high row - get #low row)) row) rows
 > mapM_ print (V.take 2 diffed)
 (#diff := 1.1400000000000006,#date := "2016-08-10",#high := 108.900002,#low := 107.760002)
 (#diff := 0.9300000000000068,#date := "2016-08-09",#high := 108.940002,#low := 108.010002)

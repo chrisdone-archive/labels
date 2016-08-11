@@ -1,5 +1,5 @@
 name:                labels
-version:             0.0.0
+version:             0.1.0
 synopsis:            Declare and access tuple fields with labels
 description:         Declare and access tuple fields with labels.
                      An approach to anonymous records.
