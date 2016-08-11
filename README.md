@@ -13,6 +13,13 @@ Enable these extensions:
 
 * In a module: `{-# LANGUAGE OverloadedLabels, TypeOperators, DataKinds, FlexibleContexts #-}`
 
+Let's use GHCi:
+
+``` haskell
+> import Labels
+> :set -XOverloadedLabels -XTypeOperators -XDataKinds -XFlexibleContexts
+```
+
 #### Construct a record
 
 Use regular tuple syntax, but label each field with this syntax:
