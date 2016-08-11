@@ -192,4 +192,5 @@ $(let makeInstance size slot =
          (concat . concat)
          (mapM (\size -> mapM (\slot -> makeInstance size slot)
                               [1 .. size])
-                [1 .. 16]))
+                [1 .. 24]))
+
