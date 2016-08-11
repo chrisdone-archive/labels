@@ -97,6 +97,11 @@ Accessing fields is natural as anything:
 ``` haskell
 > V.sum (V.map #low rows)
 2331.789993
+```
+
+We can just make up new fields on the fly:
+
+``` haskell
 > let diffed = V.map (\row -> cons (#diff := (#high row - #low row)) row) rows
 > mapM_ print (V.take 2 diffed)
 (#diff := 1.1400000000000006,#date := "2016-08-10",#high := 108.900002,#low := 107.760002)
