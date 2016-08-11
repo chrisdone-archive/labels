@@ -11,7 +11,8 @@ maintainer:          chrisdone@gmail.com
 copyright:           2016 Chris Done
 category:            Development
 build-type:          Simple
-extra-source-files:  README
+extra-source-files:  README.md, CHANGELOG
+stability:           Experimental
 cabal-version:       >=1.10
 
 library
