@@ -10,6 +10,8 @@ the implemented and to-be-implemented work on extensible records in GHC.
 
 ## Basic examples
 
+The [haddock docs are here.](https://chrisdone.github.io/labels/)
+
 Enable these extensions:
 
 * In GHCi: `:set -XOverloadedLabels -XTypeOperators -XDataKinds -XFlexibleContexts`
