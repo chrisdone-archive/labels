@@ -6,16 +6,9 @@ Declare and access tuple fields with labels
 
 Enable these extensions:
 
-* In GHCi
+* In GHCi: `:set -XOverloadedLabels -XTypeOperators -XDataKinds -XFlexibleContexts`
 
-        @
-        :set -XOverloadedLabels -XTypeOperators -XDataKinds -XFlexibleContexts
-        @
-* In a module
-
-        @
-        {-\# LANGUAGE OverloadedLabels, TypeOperators, DataKinds, FlexibleContexts \#-}
-        @
+* In a module: `{-# LANGUAGE OverloadedLabels, TypeOperators, DataKinds, FlexibleContexts #-}`
 
 Construct a record:
 
