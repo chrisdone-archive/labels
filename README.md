@@ -31,6 +31,8 @@ Let's use GHCi:
 <tr><td>Get fields of a record</td><td><pre lang="haskell">
 > get #bar (#foo := "hi", #bar := 123)
 123
+> #bar (#foo := "hi", #bar := 123) -- or this convenience
+123
 </pre></td></tr>
 <tr><td>Set fields of a record</td><td><pre lang="haskell">
 > set #bar 66 (#foo := "hi", #bar := 123)
