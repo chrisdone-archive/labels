@@ -2,10 +2,13 @@
 
 Declare and access tuple fields with labels
 
-## Basic examples
+## The simple package
+
+The `labels` package just provides labels and has very small source
+code and dependencies.
 
 Some trivial examples provided by the
-[labels](https://github.com/chrisdone/labels/tree/master/labels) package.
+[labels](https://github.com/chrisdone/labels/tree/master/labels) package:
 
 <table>
 <tr><td>Get fields of a record</td><td><pre lang="haskell">
