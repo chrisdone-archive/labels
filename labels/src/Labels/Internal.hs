@@ -50,8 +50,21 @@ instance (Ord value) => Ord (label := value) where
   compare (_ := x) (_ := y) = x `compare` y
   {-# INLINE compare #-}
 
-instance (Show t) => Show (l := t) where
-  show (l := t) = "#" ++ (symbolVal l) ++ " := " ++ show t
+instance (Show t) =>
+         Show (l := t) where
+  showsPrec p (l := t) =
+    showParen (p > 10) (showString ("#" ++ (symbolVal l) ++ " := " ++ show t))
+
+-- | A newtype wrapper which indicates the contents is a labelled
+-- tuple. Can be used in APIs like Aeson and SQL and such to implement
+-- \"from a record\"-type instances.
+newtype Labels a = L a
+  deriving (Eq,Ord,Show)
+
+-- | Get the labels.
+labels :: Labels a -> a
+labels (L a) = a
+{-# INLINE labels #-}
 
 --------------------------------------------------------------------------------
 -- Basic accessors
@@ -188,3 +201,4 @@ $(let makeInstance size slot =
          (mapM (\size -> mapM (\slot -> makeInstance size slot)
                               [1 .. size])
                 [1 .. 24]))
+
