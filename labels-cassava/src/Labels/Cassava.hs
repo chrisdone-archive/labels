@@ -62,7 +62,7 @@ $(let makeInstance :: Int -> Q Dec
             where var i = mkName ("t" ++ show i)
           getter (j::Int) =
               [|let proxy = Proxy :: Proxy $(varT (l_tyvar j))
-                in case M.lookup (S8.pack (symbolVal proxy)) hash of
+                in case M.lookup (S8.pack (symbolVal proxy)) $(varE hash_var) of
                        Nothing -> fail ("Missing field " ++ symbolVal proxy)
                        Just v -> fmap (proxy :=) (parseField v)|]
   in mapM makeInstance [1..24])
