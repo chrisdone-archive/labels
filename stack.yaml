@@ -2,3 +2,4 @@ resolver: nightly-2016-05-27
 packages:
 - labels
 - labels-cassava
+- labels-aeson
