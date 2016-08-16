@@ -2,7 +2,7 @@
 
 Declare and access tuple fields with labels
 
-## The simple package
+## The basic package
 
 The `labels` package just provides labels and has very small source
 code and dependencies.
@@ -24,7 +24,7 @@ Some trivial examples provided by the
 *Note: You need GHC 8.0.1 for the `#foo` syntax, otherwise you have to
  use `$("foo")` which works on GHC 7.10.*
 
-## Integrations with packages
+## Integration with other packages
 
 There are integration packages for getting labelled things out of
 common data parsers:
