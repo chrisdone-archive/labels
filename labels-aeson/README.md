@@ -11,8 +11,9 @@ Just (#activities-heart-intraday := Object (fromList [("dataset",Array [Object (
 > do result :: Maybe ("activities-heart-intraday" := ("dataset" := [("time" := String, "value" := Int)])) <- fmap decode (L.readFile "fitbit.json")
      print result
 Just (#activities-heart-intraday := #dataset := [(#time := "00:00:00",#value := 64),(#time := "00:00:10",#value := 63),(#time := "00:00:20",#value := 64),(#time := "00:00:30",#value := 65),(#time := "00:00:45",#value := 65)])
-> do Just (_ := (_ := ds)) :: Maybe ("activities-heart-intraday" := ("dataset" := [("time" := String, "value" := Int)])) <- fmap decode (L.readFile "fitbit.json")
-     mapM_ (print) ds
+ do Just result :: Maybe ("activities-heart-intraday" := ("dataset" := [("time" := String, "value" := Int)])) <- fmap decode (L.readFile "fitbit.json")
+     let {ds = get #dataset (get $("activities-heart-intraday") result)}
+     mapM_ print ds
      print (maximum (map (get #value) ds))
 (#time := "00:00:00",#value := 64)
 (#time := "00:00:10",#value := 63)
