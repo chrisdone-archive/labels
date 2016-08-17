@@ -70,7 +70,7 @@ modify f g r = set f (g (get f r)) r
 {-# INLINE modify #-}
 
 --------------------------------------------------------------------------------
--- Cons two records together
+-- Cons onto a record
 
 class Cons label value record where
   type Consed label value record
