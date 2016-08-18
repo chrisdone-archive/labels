@@ -70,7 +70,7 @@ modify f g r = set f (g (get f r)) r
 {-# INLINE modify #-}
 
 --------------------------------------------------------------------------------
--- Cons onto a record
+-- Cons a field onto a record
 
 class Cons label value record where
   type Consed label value record
@@ -190,4 +190,3 @@ $(let makeInstance size slot =
          (mapM (\size -> mapM (\slot -> makeInstance size slot)
                               [1 .. size])
                 [1 .. 24]))
-
