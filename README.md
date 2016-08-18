@@ -29,5 +29,5 @@ Some trivial examples provided by the
 There are integration packages for getting labelled things out of
 common data parsers:
 
-* [labels-cassava](https://github.com/chrisdone/labels/tree/master/labels-cassava)
-* [labels-aeson](https://github.com/chrisdone/labels/tree/master/labels-aeson)
+* [labels-csv](https://github.com/chrisdone/labels/tree/master/labels-csv)
+* [labels-json](https://github.com/chrisdone/labels/tree/master/labels-json)
