@@ -8,7 +8,7 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 -- | Support for reading from/to JSON via the Aeson package.
 
-module Labels.Aeson where
+module Labels.JSON where
 
 import           Data.Aeson
 import           Data.Proxy

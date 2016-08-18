@@ -11,6 +11,6 @@
 -- Import like: @import Labels.Cassava@
 --
 
-module Labels.Cassava where
+module Labels.CSV where
 
 import Labels.Cassava.Instances ()

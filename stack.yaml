@@ -1,5 +1,5 @@
-resolver: nightly-2016-05-27
+resolver: nightly-2016-08-18
 packages:
 - labels
-- labels-cassava
-- labels-aeson
+- labels-csv
+- labels-json
