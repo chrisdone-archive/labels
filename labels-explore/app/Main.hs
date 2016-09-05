@@ -3,7 +3,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE OverloadedLabels, TypeOperators, DataKinds, FlexibleContexts #-}
 
-module Main where
+module Main (main) where
 
 import           Data.ByteString (ByteString)
 import           Labels.Explore
@@ -36,4 +36,4 @@ dom =
                   countSink
      print count
 
-main = dom >>= print
+main = dom
