@@ -21,6 +21,7 @@ module Labels.Explore
   , (.>)
   , takeConduit
   , mapConduit
+  , foldSink
     -- * Printing things to the console
   , stdoutSink
   , statSink
@@ -112,6 +113,12 @@ takeConduit n = do
 -- | Map over a conduit.
 mapConduit :: Monad m => (a -> b) -> Conduit a m b
 mapConduit = CL.map
+
+-- | Fold over the source inputs and return a final value.
+foldSink
+  :: Monad m
+  => (b -> a -> b) -> b -> ConduitM a o m b
+foldSink = CL.fold
 
 --------------------------------------------------------------------------------
 -- Conduits
