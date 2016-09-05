@@ -93,15 +93,18 @@ explore m = withManager (runExploreT m)
 -- Conduit combinators
 
 -- | @x .| y@ pipes x into y, like a regular shell pipe.
+{-# INLINE (.|) #-}
 (.|) :: Monad m => Conduit a m b -> ConduitM b c m r -> ConduitM a c m r
 (.|) = (=$=)
 
 -- | @x .> y@ writes the stream x into the sink y. This is like
 -- writing the final output of a UNIX pipe to a file.
+{-# INLINE (.>) #-}
 (.>) :: Monad m => Source m a -> Sink a m b -> m b
 (.>) = ($$)
 
 -- | Take n items from the stream.
+{-# INLINE takeConduit #-}
 takeConduit :: Monad m => Int -> Conduit a m a
 takeConduit 0 = return ()
 takeConduit n = do
@@ -113,19 +116,23 @@ takeConduit n = do
       takeConduit (n - 1)
 
 -- | Map over a conduit.
+{-# INLINE mapConduit #-}
 mapConduit :: Monad m => (a -> b) -> Conduit a m b
 mapConduit = CL.map
 
 -- | Fold over the source inputs and return a final value.
+{-# INLINE foldSink #-}
 foldSink
   :: Monad m
   => (b -> a -> b) -> b -> ConduitM a o m b
 foldSink = CL.fold
 
 -- | Count all the inputs.
-countSink :: (Num a1, Monad m) => ConduitM a o m a1
+{-# INLINE countSink #-}
+countSink :: (Monad m) => ConduitM a o m Int
 countSink = foldSink (\x _ -> x + 1) 0
 
+{-# INLINE filterConduit #-}
 filterConduit :: Monad m => (a -> Bool) -> Conduit a m a
 filterConduit = CL.filter
 
@@ -133,8 +140,8 @@ filterConduit = CL.filter
 -- Conduits
 
 -- | Open a file and yield the contents as a source of byte chunks.
-fileSource
-  :: MonadIO m
+{-# INLINE fileSource #-}
+fileSource :: MonadIO m
   => FilePath -> Producer (ExploreT m) ByteString
 fileSource fp = do
   h <- liftIO (openFile fp ReadMode)
@@ -144,8 +151,8 @@ fileSource fp = do
   -- resource leak.
 
 -- | Open a file and write the input stream into it.
-fileSink
-  :: MonadIO m
+{-# INLINE fileSink #-}
+fileSink :: MonadIO m
   => FilePath -> Consumer ByteString (ExploreT m) ()
 fileSink fp = do
   h <- liftIO (openFile fp WriteMode)
@@ -155,14 +162,14 @@ fileSink fp = do
   -- resource leak.
 
 -- | Write the stream to stdout.
-printSink
-  :: (MonadIO m,Show a)
+{-# INLINE printSink #-}
+printSink :: (MonadIO m,Show a)
   => Consumer a (ExploreT m) ()
 printSink = awaitForever (liftIO . print)
 
 -- | Write the stream to stdout.
-stdoutSink
-  :: MonadIO m
+{-# INLINE stdoutSink #-}
+stdoutSink :: MonadIO m
   => Consumer ByteString (ExploreT m) ()
 stdoutSink = do
   sinkHandle stdout
@@ -170,6 +177,7 @@ stdoutSink = do
   -- resource leak.
 
 -- | Output stats about the input.
+{-# INLINE statSink #-}
 statSink :: MonadIO m => Consumer ByteString (ExploreT m) ()
 statSink = do
   size <- CL.fold (\total bytes -> S.length bytes + total) 0
@@ -178,8 +186,8 @@ statSink = do
     commas = reverse . intercalate "," . chunksOf 3 . reverse . show
 
 -- | Make a request and from the reply yield a source of byte chunks.
-httpSource
-  :: MonadIO m
+{-# INLINE httpSource #-}
+httpSource :: MonadIO m
   => Request -> Producer (ExploreT m) ByteString
 httpSource req = do
   resp <- lift (ExploreT (responseOpen req))
@@ -187,22 +195,22 @@ httpSource req = do
 
 -- | Read input bytes and yield rows of columns, return typed
 -- determined polymorphically.
-fromCsvConduit
-  :: (MonadCatch m,FromNamedRecord a)
+{-# INLINE fromCsvConduit #-}
+fromCsvConduit :: (MonadCatch m,FromNamedRecord a)
   => Conduit ByteString (ExploreT m) a
 fromCsvConduit = fromNamedCsv defaultDecodeOptions
 
 -- | Read input bytes and yield rows of columns, each row is a vector
 -- of columns.
-vectorCsvConduit
-  :: (MonadCatch m)
+{-# INLINE vectorCsvConduit #-}
+vectorCsvConduit :: (MonadCatch m)
   => Conduit ByteString (ExploreT m) (Vector Text)
 vectorCsvConduit = fromCsv defaultDecodeOptions NoHeader
 
 -- | Treat the input as a zip archive, extract the given entry and
 -- yield byte chunks from it.
-zipEntryConduit
-  :: MonadIO m
+{-# INLINE zipEntryConduit #-}
+zipEntryConduit :: MonadIO m
   => String -> Conduit ByteString (ExploreT m) ByteString
 zipEntryConduit name = do
   fileSink archivePath
