@@ -1,0 +1,11 @@
+:set -package temporary
+:set -package HUnit
+:set -package QuickCheck
+:set -package test-framework
+:set -package test-framework-hunit
+:set -package test-framework-quickcheck2
+
+:set -package criterion
+:set -package random
+:set -package LibZip
+:set -package zip-archive

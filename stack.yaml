@@ -3,3 +3,5 @@ packages:
 - labels
 - labels-csv
 - labels-json
+- labels-explore
+- zip-conduit

@@ -44,18 +44,16 @@
 -- >>> let double field record = set field (get field record * 2) record
 -- >>> double #mu (#bar := "hi", #mu := 123)
 -- (#bar := "hi",#mu := 246)
-
 module Labels
-  (-- Field access
-   get
-  ,set
-  ,modify
-  ,cons
+-- Field access
+  ( get
+  , set
+  , modify
+  , cons
    -- Construction
-  ,(:=)(..)
-  ,Has
-  ,Cons
-  )
+  , (:=)(..)
+  , Has
+  , Cons)
   where
 
 import Labels.Internal
