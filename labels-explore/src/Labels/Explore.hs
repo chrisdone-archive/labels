@@ -22,6 +22,8 @@ module Labels.Explore
   , takeConduit
   , mapConduit
   , foldSink
+  , countSink
+  , filterConduit
     -- * Printing things to the console
   , stdoutSink
   , statSink
@@ -119,6 +121,13 @@ foldSink
   :: Monad m
   => (b -> a -> b) -> b -> ConduitM a o m b
 foldSink = CL.fold
+
+-- | Count all the inputs.
+countSink :: (Num a1, Monad m) => ConduitM a o m a1
+countSink = foldSink (\x _ -> x + 1) 0
+
+filterConduit :: Monad m => (a -> Bool) -> Conduit a m a
+filterConduit = CL.filter
 
 --------------------------------------------------------------------------------
 -- Conduits

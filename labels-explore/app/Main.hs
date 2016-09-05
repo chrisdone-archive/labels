@@ -5,7 +5,8 @@
 
 module Main where
 
-import Labels.Explore
+import           Data.ByteString (ByteString)
+import           Labels.Explore
 
 stat :: IO ()
 stat =
@@ -27,4 +28,12 @@ foo =
   fileSource "demo.csv" .| vectorCsvConduit .>
   foldSink (\total _ -> total + 1) 0
 
-main = demo >>= print
+dom =
+  do count <- explore $ do
+                fileSource "demo.csv" .| fromCsvConduit .|
+                  filterConduit
+                    (\(row :: ("ORIGIN" := ByteString)) -> get $("ORIGIN") row == "RKS") .>
+                  countSink
+     print count
+
+main = dom >>= print
