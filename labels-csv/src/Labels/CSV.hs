@@ -5,7 +5,7 @@
 -- Import like: @import Labels.Cassava@
 --
 module Labels.CSV
-  ()
+  (DowncaseColumns(..))
   where
 
-import Labels.Cassava.Instances ()
+import Labels.Cassava.Instances (DowncaseColumns(..))

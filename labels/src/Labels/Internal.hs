@@ -24,6 +24,7 @@
 module Labels.Internal where
 
 import Data.Data
+import Data.Proxy
 import Data.String
 import GHC.TypeLits
 import Language.Haskell.TH
@@ -88,7 +89,158 @@ instance Cons label value (label' := value') where
   {-# INLINE cons #-}
 
 --------------------------------------------------------------------------------
--- Labels
+-- Projection
+
+class Project from to where
+  project :: from -> to
+
+instance (KnownSymbol l1, Has (l1 :: Symbol) t1 r) =>
+         Project r (l1 := t1) where
+  project r = (l1 := get l1 r)
+    where
+      l1 = Proxy :: Proxy l1
+
+instance ( KnownSymbol l1
+         , KnownSymbol l2
+         , Has (l1 :: Symbol) t1 r
+         , Has (l2 :: Symbol) t2 r
+         ) =>
+         Project r (l1 := t1, l2 := t2) where
+  project r = (l1 := get l1 r, l2 := get l2 r)
+    where
+      l1 = Proxy :: Proxy l1
+      l2 = Proxy :: Proxy l2
+
+instance ( KnownSymbol l1
+         , KnownSymbol l2
+         , KnownSymbol l3
+         , Has (l1 :: Symbol) t1 r
+         , Has (l2 :: Symbol) t2 r
+         , Has (l3 :: Symbol) t3 r
+         ) =>
+         Project r (l1 := t1, l2 := t2,l3 := t3) where
+  project r = (l1 := get l1 r, l2 := get l2 r,l3 := get l3 r)
+    where
+      l1 = Proxy :: Proxy l1
+      l2 = Proxy :: Proxy l2
+      l3 = Proxy :: Proxy l3
+
+instance ( KnownSymbol l1
+         , KnownSymbol l2
+         , KnownSymbol l3
+         , KnownSymbol l4
+         , Has (l1 :: Symbol) t1 r
+         , Has (l2 :: Symbol) t2 r
+         , Has (l3 :: Symbol) t3 r
+         , Has (l4 :: Symbol) t4 r
+         ) =>
+         Project r (l1 := t1, l2 := t2,l3 := t3,l4 := t4) where
+  project r = (l1 := get l1 r, l2 := get l2 r,l3 := get l3 r,l4 := get l4 r)
+    where
+      l1 = Proxy :: Proxy l1
+      l2 = Proxy :: Proxy l2
+      l3 = Proxy :: Proxy l3
+      l4 = Proxy :: Proxy l4
+
+instance ( KnownSymbol l1
+         , KnownSymbol l2
+         , KnownSymbol l3
+         , KnownSymbol l4
+         , KnownSymbol l5
+         , Has (l1 :: Symbol) t1 r
+         , Has (l2 :: Symbol) t2 r
+         , Has (l3 :: Symbol) t3 r
+         , Has (l4 :: Symbol) t4 r
+         , Has (l5 :: Symbol) t5 r
+         ) =>
+         Project r (l1 := t1, l2 := t2,l3 := t3,l4 := t4,l5 := t5) where
+  project r = (l1 := get l1 r, l2 := get l2 r,l3 := get l3 r,l4 := get l4 r,l5 := get l5 r)
+    where
+      l1 = Proxy :: Proxy l1
+      l2 = Proxy :: Proxy l2
+      l3 = Proxy :: Proxy l3
+      l4 = Proxy :: Proxy l4
+      l5 = Proxy :: Proxy l5
+
+instance ( KnownSymbol l1
+         , KnownSymbol l2
+         , KnownSymbol l3
+         , KnownSymbol l4
+         , KnownSymbol l5
+         , KnownSymbol l6
+         , Has (l1 :: Symbol) t1 r
+         , Has (l2 :: Symbol) t2 r
+         , Has (l3 :: Symbol) t3 r
+         , Has (l4 :: Symbol) t4 r
+         , Has (l5 :: Symbol) t5 r
+         , Has (l6 :: Symbol) t6 r
+         ) =>
+         Project r (l1 := t1, l2 := t2,l3 := t3,l4 := t4,l5 := t5,l6 := t6) where
+  project r = (l1 := get l1 r, l2 := get l2 r,l3 := get l3 r,l4 := get l4 r,l5 := get l5 r,l6 := get l6 r)
+    where
+      l1 = Proxy :: Proxy l1
+      l2 = Proxy :: Proxy l2
+      l3 = Proxy :: Proxy l3
+      l4 = Proxy :: Proxy l4
+      l5 = Proxy :: Proxy l5
+      l6 = Proxy :: Proxy l6
+
+instance ( KnownSymbol l1
+         , KnownSymbol l2
+         , KnownSymbol l3
+         , KnownSymbol l4
+         , KnownSymbol l5
+         , KnownSymbol l6
+         , KnownSymbol l7
+         , Has (l1 :: Symbol) t1 r
+         , Has (l2 :: Symbol) t2 r
+         , Has (l3 :: Symbol) t3 r
+         , Has (l4 :: Symbol) t4 r
+         , Has (l5 :: Symbol) t5 r
+         , Has (l6 :: Symbol) t6 r
+         , Has (l7 :: Symbol) t7 r
+         ) =>
+         Project r (l1 := t1, l2 := t2,l3 := t3,l4 := t4,l5 := t5,l6 := t6,l7 := t7) where
+  project r = (l1 := get l1 r, l2 := get l2 r,l3 := get l3 r,l4 := get l4 r,l5 := get l5 r,l6 := get l6 r,l7 := get l7 r)
+    where
+      l1 = Proxy :: Proxy l1
+      l2 = Proxy :: Proxy l2
+      l3 = Proxy :: Proxy l3
+      l4 = Proxy :: Proxy l4
+      l5 = Proxy :: Proxy l5
+      l6 = Proxy :: Proxy l6
+      l7 = Proxy :: Proxy l7
+
+instance ( KnownSymbol l1
+         , KnownSymbol l2
+         , KnownSymbol l3
+         , KnownSymbol l4
+         , KnownSymbol l5
+         , KnownSymbol l6
+         , KnownSymbol l7
+         , KnownSymbol l8
+         , Has (l1 :: Symbol) t1 r
+         , Has (l2 :: Symbol) t2 r
+         , Has (l3 :: Symbol) t3 r
+         , Has (l4 :: Symbol) t4 r
+         , Has (l5 :: Symbol) t5 r
+         , Has (l6 :: Symbol) t6 r
+         , Has (l7 :: Symbol) t7 r
+         , Has (l8 :: Symbol) t8 r
+         ) =>
+         Project r (l1 := t1, l2 := t2,l3 := t3,l4 := t4,l5 := t5,l6 := t6,l7 := t7,l8 := t8) where
+  project r = (l1 := get l1 r, l2 := get l2 r,l3 := get l3 r,l4 := get l4 r,l5 := get l5 r,l6 := get l6 r,l7 := get l7 r,l8 := get l8 r)
+    where
+      l1 = Proxy :: Proxy l1
+      l2 = Proxy :: Proxy l2
+      l3 = Proxy :: Proxy l3
+      l4 = Proxy :: Proxy l4
+      l5 = Proxy :: Proxy l5
+      l6 = Proxy :: Proxy l6
+      l7 = Proxy :: Proxy l7
+      l8 = Proxy :: Proxy l8
+
+--------------------------------------------------------------------------------
 
 #if __GLASGOW_HASKELL__ >= 800
 instance l ~ l' =>

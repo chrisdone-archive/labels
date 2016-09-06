@@ -50,10 +50,12 @@ module Labels
   , set
   , modify
   , cons
+  , project
    -- Construction
   , (:=)(..)
   , Has
-  , Cons)
+  , Cons
+  , Project)
   where
 
 import Labels.Internal

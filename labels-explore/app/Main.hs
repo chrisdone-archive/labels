@@ -1,39 +1,64 @@
-{-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE OverloadedLabels, TypeOperators, DataKinds, FlexibleContexts #-}
+{-# LANGUAGE TypeApplications, OverloadedStrings, OverloadedLabels,
+  TypeOperators, DataKinds, FlexibleContexts #-}
 
-module Main (main) where
+import Labels.Explore
 
-import           Data.ByteString (ByteString)
-import           Labels.Explore
-
-stat :: IO ()
-stat =
-  explore $ do
-    httpSource "http://chrisdone.com/ontime.csv.zip" .|
-      zipEntryConduit "ontime.csv" .>
-      statSink
-
-demo :: IO Double
-demo =
+main1 :: IO ()
+main1 =
   explore $
-  fileSource "demo.csv" .| fromCsvConduit .|
-  mapConduit (\(c :: ("ORIGIN" := String, "DISTANCE" := Double)) -> c) .>
-  foldSink (\total c -> get $("DISTANCE") c + total) 0
+  httpSource "http://chrisdone.com/ontime.csv.zip" .|
+  zipEntryConduit "ontime.csv" .|
+  fromCsvConduit
+    @("fl_date" := Day, "tail_num" := String)
+    (set #downcase True csv) .|
+  dropConduit 10 .|
+  takeConduit 5 .>
+  tableSink
 
-foo :: IO Int
-foo =
+main_write :: IO ()
+main_write =
+  explore
+    (httpSource "http://chrisdone.com/ontime.csv.zip" .|
+     zipEntryConduit "ontime.csv" .>
+     fileSink "ontime.csv")
+
+main1_1 :: IO ()
+main1_1 =
   explore $
-  fileSource "demo.csv" .| vectorCsvConduit .>
-  foldSink (\total _ -> total + 1) 0
+  fileSource "ontime.csv" .|
+  fromCsvConduit
+    @("fl_date" := Day, "tail_num" := String)
+    (set #downcase True csv) .|
+  dropConduit 10 .|
+  takeConduit 5 .>
+  tableSink
 
-dom =
-  do count <- explore $ do
-                fileSource "demo.csv" .| fromCsvConduit .|
-                  filterConduit
-                    (\(row :: ("ORIGIN" := ByteString)) -> get $("ORIGIN") row == "RKS") .>
-                  countSink
-     print count
+main2 :: IO ()
+main2 =
+  explore $
+  fileSource "demo.csv" .|
+  fromCsvConduit
+    @("fl_date" := Day, "tail_num" := String, "airline_id" := Int, "unique_carrier" := String)
+    (set #downcase True csv) .|
+  groupConduit #airline_id .|
+  explodeConduit .|
+  projectConduit @("fl_date" := _, "unique_carrier" := _) .|
+  takeConduit 5 .>
+  tableSink
 
-main = dom
+main3 :: IO ()
+main3 =
+  explore $
+  fileSource "demo.csv" .|
+  fromCsvConduit
+    @("fl_date" := Day, "tail_num" := String, "airline_id" := Int, "unique_carrier" := String)
+    (set #downcase True csv) .|
+  groupConduit #airline_id .|
+  explodeConduit .|
+  dropConduit 10 .|
+  projectConduit @("fl_date" := _, "tail_num" := _) .|
+  takeConduit 5 .>
+  tableSink
+
+demo :: IO ()
+demo = main1_1

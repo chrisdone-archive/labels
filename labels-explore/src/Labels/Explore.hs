@@ -1,3 +1,10 @@
+{-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE TupleSections #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE OverloadedLabels #-}
+{-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE DataKinds #-}
+{-# OPTIONS_GHC -fno-warn-name-shadowing #-}
 {-# OPTIONS_GHC -fno-warn-orphans -fno-warn-deprecations #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FlexibleInstances #-}
@@ -20,10 +27,16 @@ module Labels.Explore
   , (.|)
   , (.>)
   , takeConduit
+  , dropConduit
   , mapConduit
   , foldSink
   , countSink
+  , groupConduit
+  , groupByConduit
+  , explodeConduit
   , filterConduit
+  , projectConduit
+  , tableSink
     -- * Printing things to the console
   , stdoutSink
   , statSink
@@ -35,11 +48,16 @@ module Labels.Explore
   , httpSource
     -- * Reading CSV data
   , fromCsvConduit
+  , Csv
+  , csv
   , vectorCsvConduit
     -- * Reading Zip files
   , zipEntryConduit
     -- * Module re-exports
   , module Labels
+  , module Data.Time
+  , module Data.Ord
+  , module Data.Function
   ) where
 
 import           Codec.Archive.Zip
@@ -48,21 +66,31 @@ import           Control.Monad.Error
 import           Control.Monad.Reader
 import           Data.ByteString (ByteString)
 import qualified Data.ByteString as S
+import qualified Data.ByteString.Char8 as S8
+import           Data.Char
 import           Data.Conduit
 import           Data.Conduit.Binary
 import qualified Data.Conduit.List as CL
-import           Data.Csv
+import           Data.Csv hiding (Csv)
 import           Data.Csv.Conduit
+import           Data.Function
+import qualified Data.HashMap.Strict as M
 import           Data.List
 import           Data.List.Split
+import           Data.Ord
+import           Data.Proxy
 import           Data.Text (Text)
+import           Data.Time
 import           Data.Vector (Vector)
+import           GHC.TypeLits
 import           Labels
 import           Labels.CSV () -- Bring in instances.
-import           Network.HTTP.Client.Conduit
-import           Network.HTTP.Simple
+import           Labels.Cassava.Instances
+import           Network.HTTP.Client.Conduit hiding (Proxy)
+import           Network.HTTP.Simple hiding (Proxy)
 import           System.Directory
 import           System.IO
+import           Text.Printf
 
 --------------------------------------------------------------------------------
 -- Types
@@ -80,6 +108,12 @@ instance (MonadThrow m, MonadCatch m) =>
 
 instance Exception CsvParseError
 
+instance FromField Day where
+  parseField xs = parseTimeM True defaultTimeLocale "%F" (S8.unpack xs)
+
+instance ToField Day where
+  toField xs = toField (formatTime defaultTimeLocale "%F" xs)
+
 --------------------------------------------------------------------------------
 -- Starting point
 
@@ -93,13 +127,11 @@ explore m = withManager (runExploreT m)
 -- Conduit combinators
 
 -- | @x .| y@ pipes x into y, like a regular shell pipe.
-{-# INLINE (.|) #-}
 (.|) :: Monad m => Conduit a m b -> ConduitM b c m r -> ConduitM a c m r
 (.|) = (=$=)
 
 -- | @x .> y@ writes the stream x into the sink y. This is like
 -- writing the final output of a UNIX pipe to a file.
-{-# INLINE (.>) #-}
 (.>) :: Monad m => Source m a -> Sink a m b -> m b
 (.>) = ($$)
 
@@ -135,6 +167,26 @@ countSink = foldSink (\x _ -> x + 1) 0
 {-# INLINE filterConduit #-}
 filterConduit :: Monad m => (a -> Bool) -> Conduit a m a
 filterConduit = CL.filter
+
+{-# INCLUDE dropConduit #-}
+dropConduit :: Monad m => Int -> Conduit a m a
+dropConduit 0 = awaitForever yield
+dropConduit n = do
+  m <- await
+  case m of
+    Nothing -> return ()
+    Just x -> do
+      yield x
+      dropConduit (n - 1)
+
+{-# INCLUDE groupByConduit #-}
+groupByConduit :: Monad m => (a -> a -> Bool) -> Conduit a m [a]
+groupByConduit = CL.groupBy
+
+
+{-# INCLUDE explodeConduit #-}
+explodeConduit :: (Foldable f, Monad m) => Conduit (f a) m a
+explodeConduit = CL.concat
 
 --------------------------------------------------------------------------------
 -- Conduits
@@ -193,12 +245,28 @@ httpSource req = do
   resp <- lift (ExploreT (responseOpen req))
   getResponseBody resp
 
+-- | CSV configuration.
+type Csv a = ("rowType" := Proxy a, "downcase" := Bool, "seperator" := Char)
+
+-- | Default CSV configuration.
+csv :: Csv a
+csv = (#rowType := Proxy, #downcase := False, #seperator := ',')
+
 -- | Read input bytes and yield rows of columns, return typed
 -- determined polymorphically.
 {-# INLINE fromCsvConduit #-}
-fromCsvConduit :: (MonadCatch m,FromNamedRecord a)
-  => Conduit ByteString (ExploreT m) a
-fromCsvConduit = fromNamedCsv defaultDecodeOptions
+fromCsvConduit
+  :: forall a m.
+     (MonadCatch m, FromNamedRecord a)
+  => Csv a -> Conduit ByteString (ExploreT m) a
+fromCsvConduit config =
+  if get #downcase config
+    then fromNamedCsv options $= CL.map unDowncaseColumns
+    else fromNamedCsv options
+  where
+    options =
+      defaultDecodeOptions
+      {decDelimiter = fromIntegral (ord (get #seperator config))}
 
 -- | Read input bytes and yield rows of columns, each row is a vector
 -- of columns.
@@ -221,3 +289,75 @@ zipEntryConduit name = do
   where
     fp = name ++ ".tmp"
     archivePath = name ++ ".zip"
+
+--------------------------------------------------------------------------------
+-- Record things
+
+{-# INCLUDE groupConduit #-}
+groupConduit
+  :: (Has label a record, Monad m, Eq a)
+  => Proxy label -> Conduit record m [record]
+groupConduit field = CL.groupBy (on (==) (get field))
+
+-- | Project a subset of fields from the input record.
+projectConduit :: forall to from m. (Monad m, Project from to) => Conduit from m to
+projectConduit = CL.map project
+
+instance (ToField t1) =>
+         ToNamedRecord (l1 := t1) where
+  toNamedRecord (l1 := v1) =
+    M.fromList [(key l1, toField v1)]
+    where
+      key = S8.pack . symbolVal
+
+instance (ToField t1,ToField t2) =>
+         ToNamedRecord (l1 := t1, l2 := t2) where
+  toNamedRecord (l1 := v1, l2 := v2) =
+    M.fromList [(key l1, toField v1), (key l2, toField v2)]
+    where
+      key = S8.pack . symbolVal
+
+instance (ToField t1,ToField t2,ToField t3) =>
+         ToNamedRecord (l1 := t1, l2 := t2, l3 := t3) where
+  toNamedRecord (l1 := v1, l2 := v2,l3 := v3) =
+    M.fromList [(key l1, toField v1), (key l2, toField v2)
+               ,(key l3, toField v3)]
+    where
+      key = S8.pack . symbolVal
+
+instance (ToField t1, ToField t2, ToField t3, ToField t4) =>
+         ToNamedRecord (l1 := t1, l2 := t2, l3 := t3, l4 := t4) where
+  toNamedRecord (l1 := v1, l2 := v2, l3 := v3, l4 := v4) =
+    M.fromList
+      [ (key l1, toField v1)
+      , (key l2, toField v2)
+      , (key l3, toField v3)
+      , (key l4, toField v4)
+      ]
+    where
+      key = S8.pack . symbolVal
+
+-- | Sink all results into a table and print to stdout.
+tableSink :: (ToNamedRecord record,MonadIO m) => Consumer record (ExploreT m) ()
+tableSink = do
+  rows <- CL.map toNamedRecord $= CL.consume
+  case rows of
+    [] -> return ()
+    _ ->
+      liftIO
+        (putStrLn
+           (tablize
+              (map
+                 (map ((True, ) . S8.unpack))
+                 (M.keys (Data.List.head rows) : map M.elems rows))))
+
+-- | Make a table out of a list of rows.
+tablize :: [[(Bool,String)]] -> String
+tablize xs =
+  intercalate "\n"
+              (map (intercalate "  " . map fill . zip [0 ..]) xs)
+  where fill (x',(left,text')) = printf ("%" ++ direction ++ show width ++ "s") text'
+          where direction = if left
+                               then "-"
+                               else ""
+                width = maximum (map (length . snd . (!! x')) xs)

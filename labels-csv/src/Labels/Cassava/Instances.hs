@@ -1,3 +1,4 @@
+{-# LANGUAGE Strict #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE FlexibleInstances #-}
@@ -12,6 +13,7 @@
 module Labels.Cassava.Instances where
 
 import qualified Data.ByteString.Char8 as S8
+import           Data.Char
 import           Data.Csv
 import qualified Data.HashMap.Strict as M
 import           Data.Proxy
@@ -66,3 +68,11 @@ $(let makeInstance :: Int -> Q Dec
                        Nothing -> fail ("Missing field " ++ symbolVal proxy)
                        Just v -> fmap (proxy :=) (parseField v)|]
   in mapM makeInstance [1..24])
+
+newtype DowncaseColumns a = DowncaseColumns {unDowncaseColumns :: a}
+instance FromNamedRecord a =>
+         FromNamedRecord (DowncaseColumns a) where
+  parseNamedRecord =
+    fmap DowncaseColumns .
+    parseNamedRecord .
+    M.fromList . map (\(k, v) -> (S8.map toLower k, v)) . M.toList
