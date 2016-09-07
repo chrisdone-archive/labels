@@ -35,6 +35,7 @@ module Labels.Explore
   , groupByConduit
   , explodeConduit
   , filterConduit
+  , sinkConduit
   , projectConduit
   , tableSink
     -- * Printing things to the console
@@ -161,12 +162,17 @@ foldSink = CL.fold
 
 -- | Count all the inputs.
 {-# INLINE countSink #-}
-countSink :: (Monad m) => ConduitM a o m Int
+countSink :: (Monad m) => Consumer a m Int
 countSink = foldSink (\x _ -> x + 1) 0
 
 {-# INLINE filterConduit #-}
 filterConduit :: Monad m => (a -> Bool) -> Conduit a m a
 filterConduit = CL.filter
+
+sinkConduit :: (Monad m) => Consumer a m result -> Conduit a m result
+sinkConduit m = do
+  v <- m
+  yield v
 
 {-# INCLUDE dropConduit #-}
 dropConduit :: Monad m => Int -> Conduit a m a

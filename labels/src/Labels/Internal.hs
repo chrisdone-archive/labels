@@ -1,3 +1,4 @@
+{-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE DeriveDataTypeable #-}
@@ -65,9 +66,10 @@ class Has (label :: Symbol) value record | label record -> value where
   -- | Set a field by doing: @set #salary 54.00 employee@
   set :: Proxy label -> value -> record -> record
 
--- | Modify a field by doing: @modify #salary (* 1.1) employee@
+-- | Strictly modify a field by doing: @modify #salary (* 1.1) employee@
 modify :: Has label value record => Proxy label -> (value -> value) -> record -> record
-modify f g r = set f (g (get f r)) r
+modify f g r = set f (g v) r
+  where !v = get f r
 {-# INLINE modify #-}
 
 --------------------------------------------------------------------------------

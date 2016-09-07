@@ -27,10 +27,13 @@ main1_1 =
   explore $
   fileSource "ontime.csv" .|
   fromCsvConduit
-    @("fl_date" := Day, "tail_num" := String)
+    @("distance" := Double)
     (set #downcase True csv) .|
-  dropConduit 10 .|
-  takeConduit 5 .>
+  sinkConduit
+    (foldSink
+       (\table row ->
+          modify #flights (+ 1) (modify #distance (+ get #distance row) table))
+       (#flights := (0 :: Int), #distance := 0)) .>
   tableSink
 
 main2 :: IO ()
@@ -60,5 +63,4 @@ main3 =
   takeConduit 5 .>
   tableSink
 
-demo :: IO ()
-demo = main1_1
+main = main1_1
