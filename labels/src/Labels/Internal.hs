@@ -25,13 +25,14 @@
 module Labels.Internal where
 
 import Data.Data
-import Data.Proxy
 import Data.String
 import GHC.TypeLits
 import Language.Haskell.TH
 
 #if __GLASGOW_HASKELL__ >= 800
 import GHC.OverloadedLabels
+#else
+import Data.Proxy
 #endif
 
 --------------------------------------------------------------------------------
