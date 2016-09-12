@@ -3,10 +3,10 @@
 
 import Labels.Explore
 
-main1 :: IO ()
-main1 =
-  explore $
-  httpSource "http://chrisdone.com/ontime.csv.zip" .|
+moo1 :: IO ()
+moo1 =
+  runResourceT $
+  httpSource "http://chrisdone.com/ontime.csv.zip" responseBody .|
   zipEntryConduit "ontime.csv" .|
   fromCsvConduit
     @("fl_date" := Day, "tail_num" := String)
@@ -15,16 +15,16 @@ main1 =
   takeConduit 5 .>
   tableSink
 
-main_write :: IO ()
-main_write =
-  explore
-    (httpSource "http://chrisdone.com/ontime.csv.zip" .|
+moo_write :: IO ()
+moo_write =
+  runResourceT
+    (httpSource "http://chrisdone.com/ontime.csv.zip" responseBody .|
      zipEntryConduit "ontime.csv" .>
      fileSink "ontime.csv")
 
-main1_1 :: IO ()
-main1_1 =
-  explore $
+moo1_1 :: IO ()
+moo1_1 =
+  runResourceT $
   fileSource "ontime.csv" .|
   fromCsvConduit
     @("distance" := Double)
@@ -36,10 +36,10 @@ main1_1 =
        (#flights := (0 :: Int), #distance := 0)) .>
   tableSink
 
-main2 :: IO ()
-main2 =
-  explore $
-  fileSource "demo.csv" .|
+moo2 :: IO ()
+moo2 =
+  runResourceT $
+  fileSource "ontime.csv" .|
   fromCsvConduit
     @("fl_date" := Day, "tail_num" := String, "airline_id" := Int, "unique_carrier" := String)
     (set #downcase True csv) .|
@@ -49,10 +49,10 @@ main2 =
   takeConduit 5 .>
   tableSink
 
-main3 :: IO ()
-main3 =
-  explore $
-  fileSource "demo.csv" .|
+moo3 :: IO ()
+moo3 =
+  runResourceT $
+  fileSource "ontime.csv" .|
   fromCsvConduit
     @("fl_date" := Day, "tail_num" := String, "airline_id" := Int, "unique_carrier" := String)
     (set #downcase True csv) .|
@@ -63,4 +63,4 @@ main3 =
   takeConduit 5 .>
   tableSink
 
-main = main1_1
+moo = moo1_1

@@ -21,8 +21,7 @@
 
 module Labels.Explore
   ( -- * Starting point
-    explore
-  , ExploreT
+    runResourceT
     -- * Conduit combinators
   , (.|)
   , (.>)
@@ -47,6 +46,7 @@ module Labels.Explore
   , fileSink
     -- * Making HTTP requests
   , httpSource
+  , responseBody
     -- * Reading CSV data
   , fromCsvConduit
   , Csv
@@ -62,9 +62,9 @@ module Labels.Explore
   ) where
 
 import           Codec.Archive.Zip
-import           Control.Monad.Catch
+import           Control.Exception
 import           Control.Monad.Error
-import           Control.Monad.Reader
+import           Control.Monad.Trans.Resource
 import           Data.ByteString (ByteString)
 import qualified Data.ByteString as S
 import qualified Data.ByteString.Char8 as S8
@@ -96,17 +96,6 @@ import           Text.Printf
 --------------------------------------------------------------------------------
 -- Types
 
--- | Context for exploring data.
-newtype ExploreT m a = ExploreT
-  { runExploreT :: ReaderT Manager m a
-  } deriving ( MonadIO, Monad, Applicative, Functor, MonadThrow
-             , MonadCatch)
-
-instance (MonadThrow m, MonadCatch m) =>
-         MonadError CsvParseError (ExploreT m) where
-  throwError = throwM
-  catchError = catch
-
 instance Exception CsvParseError
 
 instance FromField Day where
@@ -114,15 +103,6 @@ instance FromField Day where
 
 instance ToField Day where
   toField xs = toField (formatTime defaultTimeLocale "%F" xs)
-
---------------------------------------------------------------------------------
--- Starting point
-
--- | Explore some data.
-explore
-  :: MonadIO m
-  => ExploreT m a -> m a
-explore m = withManager (runExploreT m)
 
 --------------------------------------------------------------------------------
 -- Conduit combinators
@@ -199,57 +179,39 @@ explodeConduit = CL.concat
 
 -- | Open a file and yield the contents as a source of byte chunks.
 {-# INLINE fileSource #-}
-fileSource :: MonadIO m
-  => FilePath -> Producer (ExploreT m) ByteString
+fileSource :: MonadResource m
+  => FilePath -> Producer m ByteString
 fileSource fp = do
-  h <- liftIO (openFile fp ReadMode)
-  sourceHandle h
-  liftIO (hClose h)
-  -- FIXME: Use MonadResource to free the handle properly.  This is a
-  -- resource leak.
+  sourceFile fp
 
 -- | Open a file and write the input stream into it.
 {-# INLINE fileSink #-}
-fileSink :: MonadIO m
-  => FilePath -> Consumer ByteString (ExploreT m) ()
+fileSink :: MonadResource m
+  => FilePath -> Consumer ByteString m ()
 fileSink fp = do
-  h <- liftIO (openFile fp WriteMode)
-  sinkHandle h
-  liftIO (hClose h)
-  -- FIXME: Use MonadResource to free the handle properly.  This is a
-  -- resource leak.
+  sinkFile fp
 
 -- | Write the stream to stdout.
 {-# INLINE printSink #-}
 printSink :: (MonadIO m,Show a)
-  => Consumer a (ExploreT m) ()
+  => Consumer a m ()
 printSink = awaitForever (liftIO . print)
 
 -- | Write the stream to stdout.
 {-# INLINE stdoutSink #-}
 stdoutSink :: MonadIO m
-  => Consumer ByteString (ExploreT m) ()
+  => Consumer ByteString m ()
 stdoutSink = do
   sinkHandle stdout
-  -- FIXME: Use MonadResource to free the handle properly.  This is a
-  -- resource leak.
 
 -- | Output stats about the input.
 {-# INLINE statSink #-}
-statSink :: MonadIO m => Consumer ByteString (ExploreT m) ()
+statSink :: MonadIO m => Consumer ByteString m ()
 statSink = do
   size <- CL.fold (\total bytes -> S.length bytes + total) 0
   liftIO (putStrLn ("Bytes: " ++ commas size))
   where
     commas = reverse . intercalate "," . chunksOf 3 . reverse . show
-
--- | Make a request and from the reply yield a source of byte chunks.
-{-# INLINE httpSource #-}
-httpSource :: MonadIO m
-  => Request -> Producer (ExploreT m) ByteString
-httpSource req = do
-  resp <- lift (ExploreT (responseOpen req))
-  getResponseBody resp
 
 -- | CSV configuration.
 type Csv a = ("rowType" := Proxy a, "downcase" := Bool, "seperator" := Char)
@@ -263,12 +225,12 @@ csv = (#rowType := Proxy, #downcase := False, #seperator := ',')
 {-# INLINE fromCsvConduit #-}
 fromCsvConduit
   :: forall a m.
-     (MonadCatch m, FromNamedRecord a)
-  => Csv a -> Conduit ByteString (ExploreT m) a
+     (FromNamedRecord a,MonadError IOError m)
+  => Csv a -> Conduit ByteString m a
 fromCsvConduit config =
   if get #downcase config
-    then fromNamedCsv options $= CL.map unDowncaseColumns
-    else fromNamedCsv options
+    then fromNamedCsvLiftError (userError . show) options $= CL.map unDowncaseColumns
+    else fromNamedCsvLiftError (userError . show) options
   where
     options =
       defaultDecodeOptions
@@ -277,15 +239,15 @@ fromCsvConduit config =
 -- | Read input bytes and yield rows of columns, each row is a vector
 -- of columns.
 {-# INLINE vectorCsvConduit #-}
-vectorCsvConduit :: (MonadCatch m)
-  => Conduit ByteString (ExploreT m) (Vector Text)
+vectorCsvConduit :: (MonadError CsvParseError m)
+  => Conduit ByteString m (Vector Text)
 vectorCsvConduit = fromCsv defaultDecodeOptions NoHeader
 
 -- | Treat the input as a zip archive, extract the given entry and
 -- yield byte chunks from it.
 {-# INLINE zipEntryConduit #-}
-zipEntryConduit :: MonadIO m
-  => String -> Conduit ByteString (ExploreT m) ByteString
+zipEntryConduit :: (MonadResource m)
+  => String -> Conduit ByteString m ByteString
 zipEntryConduit name = do
   fileSink archivePath
   liftIO (withArchive archivePath (sourceEntry name (sinkFile fp)))
@@ -344,7 +306,7 @@ instance (ToField t1, ToField t2, ToField t3, ToField t4) =>
       key = S8.pack . symbolVal
 
 -- | Sink all results into a table and print to stdout.
-tableSink :: (ToNamedRecord record,MonadIO m) => Consumer record (ExploreT m) ()
+tableSink :: (ToNamedRecord record,MonadIO m) => Consumer record m ()
 tableSink = do
   rows <- CL.map toNamedRecord $= CL.consume
   case rows of

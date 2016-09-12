@@ -1,0 +1,6 @@
+[submodule "http-client"]
+	path = http-client
+	url = git@github.com:snoyberg/http-client.git
+[submodule "zip-conduit"]
+	path = zip-conduit
+	url = git@github.com:tymmym/zip-conduit.git

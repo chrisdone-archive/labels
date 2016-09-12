@@ -4,4 +4,7 @@ packages:
 - labels-csv
 - labels-json
 - labels-explore
+- http-client/http-client
+- http-client/http-client-tls
+- http-client/http-conduit
 - zip-conduit
