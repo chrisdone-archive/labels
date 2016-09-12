@@ -31,3 +31,10 @@ common data parsers:
 
 * [labels-csv](https://github.com/chrisdone/labels/tree/master/labels-csv)
 * [labels-json](https://github.com/chrisdone/labels/tree/master/labels-json)
+
+## Data exploration package
+
+I have put together a simple packge which brings together various
+packages around labels into one package:
+
+* [labels-explore](https://github.com/chrisdone/labels/tree/master/labels-explore)
