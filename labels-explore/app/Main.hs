@@ -63,4 +63,4 @@ moo3 =
   takeConduit 5 .>
   tableSink
 
-moo = moo1_1
+main = moo1_1
