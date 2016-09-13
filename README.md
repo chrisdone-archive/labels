@@ -2,6 +2,8 @@
 
 Declare and access tuple fields with labels
 
+    $ git clone --recursive git@github.com:chrisdone/labels
+
 ## The basic package
 
 The `labels` package just provides labels and has very small source
