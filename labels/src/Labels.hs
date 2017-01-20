@@ -51,8 +51,19 @@
 -- (#bar := "hi",#mu := 246)
 --
 -- Lenses:
+--
 -- >>> over (lens #sub . lens #foo) (*2) (#bar := "hello", #sub := (#foo := 123))
 -- (#bar := "hello",#sub := #foo := 246)
+--
+-- Projection:
+--
+-- >>> project (#bar := "hello", #foo := 3, #mu := "hi") :: ("bar" := String, "foo" := Int)
+-- (#bar := "hello",#foo := 3)
+--
+-- Field order projection:
+--
+-- >>> project (#bar := "hello", #foo := 3) :: ("foo" := Int, "bar" := String)
+-- (#foo := 3,#bar := "hello")
 
 module Labels
 -- Field access
@@ -81,6 +92,7 @@ lens
   => Proxy (label :: Symbol) -> Lens record record value value
 lens label f record =
   fmap (\value -> set label value record) (f (get label record))
+{-# INLINE lens #-}
 
 -- | Strictly modify a field by doing: @modify #salary (* 1.1) employee@
 modify :: Has label value record => Proxy label -> (value -> value) -> record -> record
