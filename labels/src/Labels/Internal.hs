@@ -106,6 +106,7 @@ instance Cons label value (label' := value') where
 -- | A record can be narrowed or have its order changed by projecting
 -- into record type.
 class Project from to where
+  -- | Narrow number of or change order of fields in a record.
   project :: from -> to
 
 --------------------------------------------------------------------------------
