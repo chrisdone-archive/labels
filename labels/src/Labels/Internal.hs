@@ -1,3 +1,6 @@
+{-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE ConstraintKinds #-}
+{-# LANGUAGE Rank2Types #-}
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE TypeFamilies #-}
@@ -12,11 +15,11 @@
 {-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE FlexibleInstances #-}
-#if __GLASGOW_HASKELL__ >= 800
-{-# LANGUAGE OverloadedLabels #-}
-#endif
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE AllowAmbiguousTypes #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE OverloadedLabels #-}
+
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 -- | This module provides a way to name the fields in a regular
@@ -26,14 +29,10 @@ module Labels.Internal where
 
 import Data.Data
 import Data.String
+import GHC.Exts
 import GHC.TypeLits
 import Language.Haskell.TH
-
-#if __GLASGOW_HASKELL__ >= 800
 import GHC.OverloadedLabels
-#else
-import Data.Proxy
-#endif
 
 --------------------------------------------------------------------------------
 -- A labelled value
@@ -61,12 +60,10 @@ instance (Show t) =>
 --------------------------------------------------------------------------------
 -- Labels
 
-#if __GLASGOW_HASKELL__ >= 800
 instance l ~ l' =>
          IsLabel (l :: Symbol) (Proxy l') where
     fromLabel _ = Proxy
     {-# INLINE fromLabel #-}
-#endif
 
 instance IsString (Q Exp) where
   fromString str = [|Proxy :: Proxy $(litT (return (StrTyLit str)))|]
@@ -110,7 +107,61 @@ class Project from to where
   project :: from -> to
 
 --------------------------------------------------------------------------------
+-- Key-value reflection
+
+-- | Reflection on labelled fields.
+class Reflect (c :: * -> Constraint) r where
+  -- | Produce a list of field names, and each field applied to the
+  -- given function.
+  reflect :: forall b. (forall a. c a => a -> b) -> r -> [(String, b)]
+
+--------------------------------------------------------------------------------
+-- Field reflection
+
+-- | A constraint and a method which both simply ignore their
+-- argument.
+class Ignore a where ignore :: a -> ()
+instance Ignore a where ignore _ = ()
+
+-- | List the field labels present in the record.
+labels :: Reflect Ignore r => r -> [String]
+labels r = map fst (reflect @Ignore ignore r)
+
+--------------------------------------------------------------------------------
 -- TH-derived instances
+
+-- Generate Reflect instances.
+$(let labelt i = varT (mkName ("l" ++ show i))
+      labelp i = varP (mkName ("l" ++ show i))
+      labelv i = varE (mkName ("l" ++ show i))
+      valuet i = varT (mkName ("v" ++ show i))
+      valuev i = varE (mkName ("v" ++ show i))
+      valuep i = varP (mkName ("v" ++ show i))
+      c = varT (mkName "c")
+      fp = varP (mkName "f")
+      fv = varE (mkName "f")
+  in sequence
+       [ instanceD
+         (sequence [[t|$(c) $(valuet i)|] | i <- [1 :: Int .. n]])
+         [t|Reflect $(c) $(foldl
+                             appT
+                             (tupleT n)
+                             [[t|$(labelt i) := $(valuet i)|] | i <- [1 .. n]])|]
+         [ funD
+             'reflect
+             [ clause
+                 [fp, tupP [conP '(:=) [labelp i,valuep i] | i <- [1 .. n]]]
+                 (normalB
+                    (listE
+                       [ [|(symbolVal $(labelv i), $(fv) $(valuev i))|]
+                       | i <- [1 .. n]
+                       ]))
+                 []
+             ]
+         , return (PragmaD (InlineP 'reflect Inline FunLike AllPhases))
+         ]
+       | n <- [1 .. 24]
+       ])
 
 -- Generate Cons instances.
 $(let makeInstance size =

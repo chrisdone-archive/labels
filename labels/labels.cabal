@@ -1,5 +1,5 @@
 name:                labels
-version:             0.1.2
+version:             0.2.0
 synopsis:            Anonymous records via named tuples
 description:         Declare and access tuple fields with labels. An approach to anonymous records.
 homepage:            https://github.com/chrisdone/labels#readme
@@ -19,7 +19,7 @@ library
   ghc-options:         -Wall -O2
   exposed-modules:     Labels,
                        Labels.Internal
-  build-depends:       base >= 4.7 && < 5,
+  build-depends:       base >= 4.9.0.0 && < 5,
                        template-haskell
   default-language:    Haskell2010
 

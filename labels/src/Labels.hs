@@ -3,6 +3,7 @@
 {-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE Rank2Types #-}
+{-# LANGUAGE OverloadedLabels #-}
 -- | Labels for fields in a tuple.
 --
 -- Enable these extensions:
@@ -64,6 +65,16 @@
 --
 -- >>> project (#bar := "hello", #foo := 3) :: ("foo" := Int, "bar" := String)
 -- (#foo := 3,#bar := "hello")
+--
+-- Reflection of labels
+--
+-- >>> labels (#bar := "hello", #foo := 3, #mu := "hi")
+-- ["bar","foo","mu"]
+--
+-- Reflection of labelled fields
+--
+-- >>> reflect @Show show (#bar := "hello", #foo := 3, #mu := "hi")
+-- [("bar","\"hello\""),("foo","3"),("mu","\"hi\"")]
 
 module Labels
 -- Field access
@@ -73,11 +84,14 @@ module Labels
   , lens
   , cons
   , project
+  , reflect
+  , labels
    -- Construction
   , (:=)(..)
   , Has
   , Cons
-  , Project)
+  , Project
+  , Reflect)
   where
 
 import Data.Proxy
