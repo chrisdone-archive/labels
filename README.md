@@ -23,8 +23,7 @@ Some trivial examples provided by the
 </pre></td></tr>
 </table>
 
-*Note: You need GHC 8.0.1 for the `#foo` syntax, otherwise you have to
- use `$("foo")` which works on GHC 7.10.*
+*Note: You need GHC 8.0.1.*
 
 ## Integration with other packages
 
