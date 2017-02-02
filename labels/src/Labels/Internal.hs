@@ -116,18 +116,12 @@ class Reflect (c :: * -> Constraint) r where
   -- given function. Example: @reflect \@Show show (#bar := "hello", #foo := 3)@
   reflect :: forall b. (forall a. c a => a -> b) -> r -> [(String, b)]
 
---------------------------------------------------------------------------------
--- Field reflection
-
--- | A constraint and a method which both simply ignore their
--- argument.
-class Ignore a where ignore :: a -> ()
-instance Ignore a where ignore _ = ()
-
--- | List the field labels present in the record. Example: @labels
--- (#bar := "hello", #foo := 3, #mu := "hi")@
-labels :: Reflect Ignore r => r -> [String]
-labels r = map fst (reflect @Ignore ignore r)
+-- | Get the labels of a record.
+class Labels r where
+  -- | Get fields of a record. Example: @labels (pure (#bar :=
+  -- "hello", #foo := 3, #mu := "hi"))@ or @labels (Proxy :: Proxy
+  -- (#bar := "hi"))@ if you don't have a record value.
+  labels :: Proxy r -> [String]
 
 --------------------------------------------------------------------------------
 -- TH-derived instances
@@ -144,7 +138,9 @@ $(let labelt i = varT (mkName ("l" ++ show i))
       fv = varE (mkName "f")
   in sequence
        [ instanceD
-         (sequence [[t|$(c) $(valuet i)|] | i <- [1 :: Int .. n]])
+         (sequence
+            ([[t|KnownSymbol $(labelt i)|] | i <- [1 :: Int .. n]] ++
+             [[t|$(c) $(valuet i)|] | i <- [1 :: Int .. n]]))
          [t|Reflect $(c) $(foldl
                              appT
                              (tupleT n)
@@ -152,7 +148,7 @@ $(let labelt i = varT (mkName ("l" ++ show i))
          [ funD
              'reflect
              [ clause
-                 [fp, tupP [conP '(:=) [labelp i,valuep i] | i <- [1 .. n]]]
+                 [fp, tupP [conP '(:=) [labelp i, valuep i] | i <- [1 .. n]]]
                  (normalB
                     (listE
                        [ [|(symbolVal $(labelv i), $(fv) $(valuev i))|]
@@ -161,6 +157,32 @@ $(let labelt i = varT (mkName ("l" ++ show i))
                  []
              ]
          , return (PragmaD (InlineP 'reflect Inline FunLike AllPhases))
+         ]
+       | n <- [1 .. 24]
+       ])
+
+-- Generate Labels instances.
+$(let labelt i = varT (mkName ("l" ++ show i))
+      valuet i = varT (mkName ("v" ++ show i))
+  in sequence
+       [ instanceD
+         (sequence [[t|KnownSymbol $(labelt i)|] | i <- [1 :: Int .. n]])
+         [t|Labels $(foldl
+                       appT
+                       (tupleT n)
+                       [[t|$(labelt i) := $(valuet i)|] | i <- [1 .. n]])|]
+         [ funD
+             'labels
+             [ clause
+                 [wildP]
+                 (normalB
+                    (listE
+                       [ [|symbolVal (Proxy :: Proxy $(labelt i))|]
+                       | i <- [1 .. n]
+                       ]))
+                 []
+             ]
+         , return (PragmaD (InlineP 'labels Inline FunLike AllPhases))
          ]
        | n <- [1 .. 24]
        ])
