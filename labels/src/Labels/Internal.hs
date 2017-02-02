@@ -103,7 +103,8 @@ instance Cons label value (label' := value') where
 -- | A record can be narrowed or have its order changed by projecting
 -- into record type.
 class Project from to where
-  -- | Narrow number of or change order of fields in a record.
+  -- | Narrow number of or change order of fields in a record:
+  -- Example: @project (#foo := 1, #bar := 2) :: ("bar" := Int)@
   project :: from -> to
 
 --------------------------------------------------------------------------------
@@ -112,7 +113,7 @@ class Project from to where
 -- | Reflection on labelled fields.
 class Reflect (c :: * -> Constraint) r where
   -- | Produce a list of field names, and each field applied to the
-  -- given function.
+  -- given function. Example: @reflect \@Show show (#bar := "hello", #foo := 3)@
   reflect :: forall b. (forall a. c a => a -> b) -> r -> [(String, b)]
 
 --------------------------------------------------------------------------------
@@ -123,7 +124,8 @@ class Reflect (c :: * -> Constraint) r where
 class Ignore a where ignore :: a -> ()
 instance Ignore a where ignore _ = ()
 
--- | List the field labels present in the record.
+-- | List the field labels present in the record. Example: @labels
+-- (#bar := "hello", #foo := 3, #mu := "hi")@
 labels :: Reflect Ignore r => r -> [String]
 labels r = map fst (reflect @Ignore ignore r)
 
