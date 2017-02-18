@@ -1,3 +1,6 @@
+0.3.1:
+	* Add Subset class.
+
 0.3.0:
 	* Put labels in its own class.
 	* Change type of labels to take a Proxy.

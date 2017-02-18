@@ -1,5 +1,5 @@
 name:                labels
-version:             0.3.0
+version:             0.3.1
 synopsis:            Anonymous records via named tuples
 description:         Declare and access tuple fields with labels. An approach to anonymous records.
 homepage:            https://github.com/chrisdone/labels#readme

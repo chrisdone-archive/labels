@@ -1,3 +1,4 @@
+{-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE Rank2Types #-}
@@ -20,7 +21,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE OverloadedLabels #-}
 
-{-# OPTIONS_GHC -fno-warn-orphans #-}
+{-# OPTIONS_GHC -fno-warn-orphans -Wno-redundant-constraints #-}
 
 -- | This module provides a way to name the fields in a regular
 -- Haskell tuple and then look them up later, statically.
@@ -106,6 +107,11 @@ class Project from to where
   -- | Narrow number of or change order of fields in a record:
   -- Example: @project (#foo := 1, #bar := 2) :: ("bar" := Int)@
   project :: from -> to
+
+--------------------------------------------------------------------------------
+-- Subset
+
+class Subset sub super
 
 --------------------------------------------------------------------------------
 -- Key-value reflection
@@ -311,5 +317,24 @@ $(let labelt i = varT (mkName ("l" ++ show i))
              ]
          , return (PragmaD (InlineP 'project Inline FunLike AllPhases))
          ]
+       | n <- [1 .. 24]
+       ])
+
+-- Generate Subset instances.
+$(let labelt i = varT (mkName ("l" ++ show i))
+      typ i = varT (mkName ("t" ++ show i))
+      typ' i = varT (mkName ("t'" ++ show i))
+      r = varT (mkName "r")
+  in sequence
+       [ instanceD
+         (sequence
+            ([ [t|Has ($(labelt i) :: Symbol) $(typ i) $(r)|]
+             | i <- [1 :: Int .. n]
+             ]))
+         [t|Subset $(foldl
+                       appT
+                       (tupleT n)
+                       [[t|$(labelt i) := $(typ' i)|] | i <- [1 .. n]]) $(r)|]
+         []
        | n <- [1 .. 24]
        ])

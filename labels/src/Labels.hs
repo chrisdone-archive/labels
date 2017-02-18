@@ -75,6 +75,7 @@
 --
 -- >>> reflect @Show show (#bar := "hello", #foo := 3, #mu := "hi")
 -- [("bar","\"hello\""),("foo","3"),("mu","\"hi\"")]
+--
 
 module Labels
 -- Field access
@@ -91,7 +92,8 @@ module Labels
   , Has
   , Cons
   , Project
-  , Reflect)
+  , Reflect
+  , Subset)
   where
 
 import Data.Proxy
