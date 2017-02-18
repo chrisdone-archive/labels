@@ -93,7 +93,8 @@ module Labels
   , Cons
   , Project
   , Reflect
-  , Subset)
+  , Subset
+  , Labels)
   where
 
 import Data.Proxy
