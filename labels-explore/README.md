@@ -56,7 +56,7 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-r = requests.get('http://chrisdone.com/ontime.csv.zip', stream=True)
+r = requests.get('http://chrisdone.com/misc/ontime.csv.zip', stream=True)
 with open("flights.csv", 'wb') as f:
     for chunk in r.iter_content(chunk_size=1024):
         if chunk:
@@ -120,7 +120,7 @@ import Labels.RunResourceT
 
 main =
   runResourceT $
-  httpSource "http://chrisdone.com/ontime.csv.zip" responseBody .|
+  httpSource "http://chrisdone.com/misc/ontime.csv.zip" responseBody .|
   zipEntryConduit "ontime.csv" .|
   fromCsvConduit
     @("fl_date" := Day, "tail_num" := String)
