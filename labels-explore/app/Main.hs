@@ -6,7 +6,7 @@ import Labels.Explore
 moo1 :: IO ()
 moo1 =
   runResourceT $
-  httpSource "http://chrisdone.com/ontime.csv.zip" responseBody .|
+  httpSource "http://chrisdone.com/misc/ontime.csv.zip" responseBody .|
   zipEntryConduit "ontime.csv" .|
   fromCsvConduit
     @("fl_date" := Day, "tail_num" := String)
@@ -18,7 +18,7 @@ moo1 =
 moo_write :: IO ()
 moo_write =
   runResourceT
-    (httpSource "http://chrisdone.com/ontime.csv.zip" responseBody .|
+    (httpSource "http://chrisdone.com/misc/ontime.csv.zip" responseBody .|
      zipEntryConduit "ontime.csv" .>
      fileSink "ontime.csv")
 
