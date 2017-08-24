@@ -63,7 +63,11 @@ instance (Show t) =>
 
 instance l ~ l' =>
          IsLabel (l :: Symbol) (Proxy l') where
+#if __GLASGOW_HASKELL__ >= 802
+    fromLabel = Proxy
+#else
     fromLabel _ = Proxy
+#endif
     {-# INLINE fromLabel #-}
 
 instance IsString (Q Exp) where
