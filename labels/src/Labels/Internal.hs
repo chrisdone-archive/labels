@@ -43,10 +43,10 @@ import GHC.OverloadedLabels
 data label := value = KnownSymbol label => Proxy label := value
 deriving instance Typeable (:=)
 deriving instance Typeable (label := value)
-infix 6 :=
+infix 1 :=
 
 instance (Eq value) => Eq (label := value) where
-  _ := x == _ := y = x == y
+  (_ := x) == (_ := y) = x == y
   {-# INLINE (==) #-}
 
 instance (Ord value) => Ord (label := value) where
