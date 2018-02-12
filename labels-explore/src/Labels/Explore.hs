@@ -22,9 +22,9 @@
 module Labels.Explore
   ( -- * Starting point
     runResourceT
+  , runConduitRes
     -- * Conduit combinators
   , (.|)
-  , (.>)
   , takeConduit
   , dropConduit
   , mapConduit
@@ -106,15 +106,6 @@ instance ToField Day where
 
 --------------------------------------------------------------------------------
 -- Conduit combinators
-
--- | @x .| y@ pipes x into y, like a regular shell pipe.
-(.|) :: Monad m => Conduit a m b -> ConduitM b c m r -> ConduitM a c m r
-(.|) = (=$=)
-
--- | @x .> y@ writes the stream x into the sink y. This is like
--- writing the final output of a UNIX pipe to a file.
-(.>) :: Monad m => Source m a -> Sink a m b -> m b
-(.>) = ($$)
 
 -- | Take n items from the stream.
 {-# INLINE takeConduit #-}
