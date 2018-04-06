@@ -168,7 +168,7 @@ $(let labelt i = varT (mkName ("l" ++ show i))
              ]
          , return (PragmaD (InlineP 'reflect Inline FunLike AllPhases))
          ]
-       | n <- [1 .. 24]
+       | n <- [0 .. 24]
        ])
 
 -- Generate Labels instances.
@@ -194,7 +194,7 @@ $(let labelt i = varT (mkName ("l" ++ show i))
              ]
          , return (PragmaD (InlineP 'labels Inline FunLike AllPhases))
          ]
-       | n <- [1 .. 24]
+       | n <- [0 .. 24]
        ])
 
 -- Generate Cons instances.
@@ -321,7 +321,7 @@ $(let labelt i = varT (mkName ("l" ++ show i))
              ]
          , return (PragmaD (InlineP 'project Inline FunLike AllPhases))
          ]
-       | n <- [1 .. 24]
+       | n <- [0 .. 24]
        ])
 
 -- Generate Subset instances.
@@ -340,5 +340,5 @@ $(let labelt i = varT (mkName ("l" ++ show i))
                        (tupleT n)
                        [[t|$(labelt i) := $(typ' i)|] | i <- [1 .. n]]) $(r)|]
          []
-       | n <- [1 .. 24]
+       | n <- [0 .. 24]
        ])
