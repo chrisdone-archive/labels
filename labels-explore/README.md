@@ -196,7 +196,7 @@ to disk, uncompressed:
 ``` haskell
 main =
   runResourceT
-    (httpSource "http://chrisdone.com/ontime.csv.zip" responseBody .|
+    (httpSource "http://chrisdone.com/misc/ontime.csv.zip" responseBody .|
      zipEntryConduit "ontime.csv" .>
      fileSink "ontime.csv")
 ```
